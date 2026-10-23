@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Anonymous, live emotional weather for your neighborhood." />
+    <meta name="theme-color" content="#FBF5EC" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1D1730" media="(prefers-color-scheme: dark)" />
+    <title>Mood Map</title>
+    <script>
+      // Pick light or dark before the first paint so the screen never flashes.
+      ;(function () {
+        var choice = 'system'
+        try { choice = localStorage.getItem('moodmap.theme') || 'system' } catch (e) {}
+        var dark = choice === 'dark' || (choice === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

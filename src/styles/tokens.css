@@ -1,0 +1,88 @@
+/*
+ * Mood Map design tokens: the ONE place where colors, fonts, corners and shadows live.
+ * Change a value here and the whole app follows.
+ *
+ * Light mode = sunrise: warm cream paper, plum ink.
+ * Dark mode  = twilight: deep cozy plum-indigo, soft glowing moods.
+ */
+
+:root {
+  /* Surfaces */
+  --bg: #fbf5ec;            /* warm cream page */
+  --bg-soft: #f5ebdf;       /* slightly deeper cream for wells */
+  --surface: #fffaf3;       /* cards */
+  --glass: rgb(255 250 243 / 0.72);  /* frosted panels over the map */
+  --line: #eadccb;          /* hairlines and borders */
+
+  /* Text */
+  --ink: #3b2c3f;           /* main text: warm plum, never pure black */
+  --ink-soft: #76637a;      /* secondary text */
+
+  /* Brand */
+  --accent: #c8607e;        /* rosy dusk: buttons, focus rings */
+  --accent-ink: #fffaf3;    /* text on accent */
+  --sky-top: #fde7d3;       /* sunrise gradient */
+  --sky-bottom: #f6d9e0;
+
+  /* Moods: harmonious, slightly desaturated */
+  --mood-joyful: #f2c14e;
+  --mood-calm: #5fb3a8;
+  --mood-energized: #f2955f;
+  --mood-tired: #a597d1;
+  --mood-stressed: #c95a4c;
+  --mood-sad: #7e9cc6;
+
+  /* Map */
+  --map-land: #f4ece1;
+  --map-water: #dfe6ea;
+  --map-park: #e6ead8;
+  --map-road: #fffaf3;
+  --map-building: #ece2d5;
+  --map-label: #9a8a98;
+
+  /* Shape and depth */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-xl: 36px;
+  --shadow-soft: 0 2px 6px rgb(83 52 70 / 0.06), 0 12px 32px rgb(83 52 70 / 0.10);
+  --shadow-lift: 0 4px 10px rgb(83 52 70 / 0.08), 0 20px 48px rgb(83 52 70 / 0.16);
+  --blur: 18px;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #1d1730;
+  --bg-soft: #251d3b;
+  --surface: #2a2142;
+  --glass: rgb(42 33 66 / 0.66);
+  --line: #3a2f56;
+
+  --ink: #f6ecf1;
+  --ink-soft: #bcadc8;
+
+  --accent: #f29a86;
+  --accent-ink: #1d1730;
+  --sky-top: #2c2148;
+  --sky-bottom: #1d1730;
+
+  --mood-joyful: #f5cd66;
+  --mood-calm: #6fc6ba;
+  --mood-energized: #f7a273;
+  --mood-tired: #b5a8e2;
+  --mood-stressed: #e0725f;
+  --mood-sad: #8eaee0;
+
+  --map-land: #221b38;
+  --map-water: #18142a;
+  --map-park: #241f3a;
+  --map-road: #2f2649;
+  --map-building: #2a2240;
+  --map-label: #8b7ea3;
+
+  --shadow-soft: 0 2px 6px rgb(0 0 0 / 0.25), 0 12px 32px rgb(0 0 0 / 0.35);
+  --shadow-lift: 0 4px 10px rgb(0 0 0 / 0.3), 0 20px 48px rgb(0 0 0 / 0.45);
+
+  color-scheme: dark;
+}
