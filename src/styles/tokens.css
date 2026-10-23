@@ -32,6 +32,14 @@
   --mood-stressed: #d84c3c;
   --mood-sad: #5f8fd0;
 
+  /* Map: richer, more saturated mood colors so they pop over streets and buildings */
+  --map-mood-joyful: #ffbf00;
+  --map-mood-calm: #00b39f;
+  --map-mood-energized: #ff6b1a;
+  --map-mood-tired: #8a5cf6;
+  --map-mood-stressed: #f0302a;
+  --map-mood-sad: #2f7bf5;
+
   /* Map */
   --map-land: #f4ece1;
   --map-water: #dfe6ea;

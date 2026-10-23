@@ -17,7 +17,8 @@ const AREAS = 'mood-areas'
 const SPOTS = 'mood-spots'
 
 const cssVar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-const moodColors = () => Object.fromEntries(MOODS.map((m) => [m.id, cssVar(m.cssVar)])) as Record<MoodId, string>
+// The map uses its own richer versions of the mood colors (see --map-mood-* in tokens.css).
+const moodColors = () => Object.fromEntries(MOODS.map((m) => [m.id, cssVar(`--map-mood-${m.id}`)])) as Record<MoodId, string>
 const topMood = (counts: CellMood['counts']): MoodId => shares(counts)[0].mood.id
 
 /** Tidy the base map: keep streets, parks, water and buildings; drop busy shop and transit icons. */
@@ -36,17 +37,18 @@ const byZoom = (atZ13: number, atZ17: number) =>
   ['interpolate', ['exponential', 1.6], ['zoom'], 13, ['*', atZ13, ['get', 's']], 17, ['*', atZ17, ['get', 's']]] as unknown as number
 
 /**
- * The mood layers, drawn on the ground beneath buildings and labels:
- *  - areas: every part of campus with enough check-ins, a gentle glow in its main mood
- *  - glow: a big soft halo around each popular place, which the areas melt into
- *  - bubble: a glossy colored bubble at the heart of each popular place, with a white rim
- *  - shine: a soft highlight on each bubble so it looks round
- *  - names: place names under the bubbles (they hide themselves where they would overlap)
+ * The mood layers, from the ground up:
+ *  - areas: every part of campus with enough check-ins glows in ALL its moods, each puff sized by
+ *    that mood's share, so a mixed area looks mixed
+ *  - mix: the same, bigger and stronger, around each popular place; the areas melt into it
+ *  - pins: a small glossy pin on each place in its main mood color, with a soft shadow, a white
+ *    rim, a shine and a slow pulse ring, plus the place name under it
  */
+const PINS = 'mood-pins'
+
 function addMoodLayers(map: MapLibreMap) {
   const before = map.getStyle().layers?.find((l) => l.type === 'symbol' || l.type === 'fill-extrusion')?.id
-  map.addSource(AREAS, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
-  map.addSource(SPOTS, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+  for (const id of [AREAS, SPOTS, PINS]) map.addSource(id, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
   map.addLayer(
     {
       id: AREAS,
@@ -54,9 +56,9 @@ function addMoodLayers(map: MapLibreMap) {
       source: AREAS,
       paint: {
         'circle-color': ['get', 'color'],
-        'circle-radius': byZoom(24, 157),
-        'circle-blur': 1,
-        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.45, 17, 0.32],
+        'circle-radius': byZoom(22, 145),
+        'circle-blur': 0.9,
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.55, 17, 0.4],
         'circle-pitch-alignment': 'map',
       },
     },
@@ -64,44 +66,67 @@ function addMoodLayers(map: MapLibreMap) {
   )
   map.addLayer(
     {
-      id: `${SPOTS}-glow`,
+      id: SPOTS,
       type: 'circle',
       source: SPOTS,
       paint: {
         'circle-color': ['get', 'color'],
-        'circle-radius': byZoom(50, 320),
-        'circle-blur': 1,
-        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.62, 17, 0.45],
+        'circle-radius': byZoom(40, 260),
+        'circle-blur': 0.85,
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.78, 17, 0.6],
         'circle-pitch-alignment': 'map',
       },
     },
     before,
   )
-  // Bubbles and names sit above everything so they're easy to see and tap.
+  // Pins sit above the buildings so they're always easy to see and tap.
+  const pinR = (r13: number, r15: number, r17: number, prop = 'b') =>
+    ['interpolate', ['linear'], ['zoom'], 13, ['*', r13, ['get', prop]], 15, ['*', r15, ['get', prop]], 17, ['*', r17, ['get', prop]]] as unknown as number
   map.addLayer({
-    id: `${SPOTS}-bubble`,
+    id: `${PINS}-pulse`,
     type: 'circle',
-    source: SPOTS,
+    source: PINS,
     paint: {
-      'circle-color': ['get', 'color'],
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, ['*', 9, ['get', 'b']], 15, ['*', 15, ['get', 'b']], 17, ['*', 24, ['get', 'b']]],
-      'circle-blur': 0.12,
-      'circle-opacity': 0.92,
-      'circle-stroke-color': '#ffffff',
-      'circle-stroke-width': ['case', ['boolean', ['get', 'selected'], false], 4, 2.5],
-      'circle-stroke-opacity': 0.95,
+      'circle-color': 'rgba(0,0,0,0)',
+      'circle-radius': pinR(5, 7, 10, 'pulse'),
+      'circle-stroke-color': ['get', 'color'],
+      'circle-stroke-width': 2,
+      'circle-stroke-opacity': ['get', 'pulseOpacity'],
     },
   })
   map.addLayer({
-    id: `${SPOTS}-shine`,
+    id: `${PINS}-shadow`,
     type: 'circle',
-    source: SPOTS,
+    source: PINS,
+    paint: {
+      'circle-color': '#2b2130',
+      'circle-radius': pinR(6.5, 8.5, 11.5),
+      'circle-blur': 0.6,
+      'circle-opacity': 0.35,
+      'circle-translate': [0, 2.5],
+    },
+  })
+  map.addLayer({
+    id: `${PINS}-dot`,
+    type: 'circle',
+    source: PINS,
+    paint: {
+      'circle-color': ['get', 'color'],
+      'circle-radius': pinR(5, 7, 10),
+      'circle-stroke-color': '#ffffff',
+      'circle-stroke-width': ['case', ['boolean', ['get', 'selected'], false], 3.5, 2.5],
+    },
+  })
+  map.addLayer({
+    id: `${PINS}-shine`,
+    type: 'circle',
+    source: PINS,
     paint: {
       'circle-color': '#ffffff',
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, ['*', 3.5, ['get', 'b']], 15, ['*', 6, ['get', 'b']], 17, ['*', 9, ['get', 'b']]],
-      'circle-blur': 0.9,
-      'circle-opacity': 0.75,
-      'circle-translate': ['interpolate', ['linear'], ['zoom'], 13, ['literal', [-2.5, -2.5]], 15, ['literal', [-4.5, -4.5]], 17, ['literal', [-7, -7]]],
+      'circle-radius': pinR(1.6, 2.2, 3),
+      'circle-blur': 0.4,
+      'circle-opacity': 0.85,
+      'circle-translate': ['interpolate', ['linear'], ['zoom'], 13, ['literal', [-1.5, -1.5]], 17, ['literal', [-3.2, -3.2]]],
     },
   })
   // Place names, if the base map provides fonts.
@@ -111,14 +136,14 @@ function addMoodLayers(map: MapLibreMap) {
     .find((f) => Array.isArray(f))
   if (map.getStyle().glyphs && font) {
     map.addLayer({
-      id: `${SPOTS}-names`,
+      id: `${PINS}-names`,
       type: 'symbol',
-      source: SPOTS,
+      source: PINS,
       layout: {
         'text-field': ['get', 'name'],
         'text-font': font,
-        'text-size': ['interpolate', ['linear'], ['zoom'], 13, 11, 16, 14],
-        'text-offset': [0, 1.8],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 13, 11, 16, 13],
+        'text-offset': [0, 1.1],
         'text-anchor': 'top',
         'text-padding': 4,
         'symbol-sort-key': ['-', 0, ['get', 'total']],
@@ -128,32 +153,64 @@ function addMoodLayers(map: MapLibreMap) {
   }
 }
 
-/** Layer data. `t` (ms) makes the glows breathe slowly. */
+// Each mood's puff sits a little off-center in its own direction, so mixes swirl instead of stacking.
+const ANGLE = Object.fromEntries(MOODS.map((m, i) => [m.id, (i / MOODS.length) * Math.PI * 2])) as Record<MoodId, number>
+const METER = 1 / 111_320
+
+/** One soft puff per mood present, sized by its share. Smaller shares are drawn last so they stay visible. */
+function mixPuffs(
+  center: [number, number],
+  counts: CellMood['counts'],
+  colors: Record<MoodId, string>,
+  size: number,
+  spreadM: number,
+  minShare: number,
+  phase: number,
+  t: number,
+) {
+  const total = MOODS.reduce((n, m) => n + counts[m.id], 0)
+  const lngScale = 1 / Math.cos((center[1] * Math.PI) / 180)
+  return MOODS.filter((m) => counts[m.id] / total >= minShare)
+    .sort((a, b) => counts[b.id] - counts[a.id])
+    .map((m) => {
+      const share = counts[m.id] / total
+      const a = ANGLE[m.id] + phase + t / 9000 // the whole mix turns very slowly
+      const away = (1 - share) * spreadM
+      const breath = 1 + 0.07 * Math.sin(t / 2400 + phase + ANGLE[m.id])
+      return {
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [center[0] + Math.cos(a) * away * METER * lngScale, center[1] + Math.sin(a) * away * METER],
+        },
+        properties: { color: colors[m.id], s: size * (0.45 + Math.sqrt(share) * 0.75) * breath },
+      }
+    })
+}
+
+/** Layer data. `t` (ms) drives the slow breathing, swirling and the pin pulse. */
 function moodData(cells: CellMood[], places: PlaceMood[], colors: Record<MoodId, string>, selectedId: string | null, t: number) {
-  const breathe = (i: number, amount: number) => 1 + amount * Math.sin(t / 2600 + i * 1.3)
-  const areas = cells.map((c, i) => ({
-    type: 'Feature' as const,
-    geometry: { type: 'Point' as const, coordinates: c.lngLat },
-    properties: { color: colors[topMood(c.counts)], s: Math.min(1.5, 0.75 + Math.sqrt(c.total) / 8) * breathe(i, 0.05) },
-  }))
-  const spots = places.map((p, i) => ({
-    type: 'Feature' as const,
-    geometry: { type: 'Point' as const, coordinates: p.at },
-    properties: {
-      id: p.id,
-      name: p.name,
-      total: p.total,
-      selected: p.id === selectedId,
-      color: colors[topMood(p.counts)],
-      s: Math.min(1.8, 0.7 + Math.sqrt(p.total) / 6) * breathe(i + 50, 0.08),
-      // Bubble size: busier places get bigger bubbles; the chosen one grows a little.
-      b: Math.min(1.5, 0.75 + Math.sqrt(p.total) / 14) * (p.id === selectedId ? 1.25 : 1) * breathe(i + 90, 0.03),
-    },
-  }))
-  return {
-    areas: { type: 'FeatureCollection' as const, features: areas },
-    spots: { type: 'FeatureCollection' as const, features: spots },
-  }
+  const areas = cells.flatMap((c, i) => mixPuffs(c.lngLat, c.counts, colors, Math.min(1.4, 0.7 + Math.sqrt(c.total) / 9), 45, 0.15, i * 1.7, t))
+  const spots = places.flatMap((p, i) => mixPuffs(p.at, p.counts, colors, Math.min(1.7, 0.75 + Math.sqrt(p.total) / 7), 80, 0.08, i * 2.3, t))
+  const pins = places.map((p, i) => {
+    const cycle = ((t / 2600 + i * 0.37) % 1 + 1) % 1 // 0 to 1, a little out of step per place
+    return {
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: p.at },
+      properties: {
+        id: p.id,
+        name: p.name,
+        total: p.total,
+        selected: p.id === selectedId,
+        color: colors[topMood(p.counts)],
+        b: (p.id === selectedId ? 1.3 : 1) * Math.min(1.25, 0.85 + Math.sqrt(p.total) / 30),
+        pulse: (p.id === selectedId ? 1.3 : 1) * Math.min(1.25, 0.85 + Math.sqrt(p.total) / 30) * (1 + cycle * 1.6),
+        pulseOpacity: t ? 0.7 * (1 - cycle) : 0,
+      },
+    }
+  })
+  const fc = <T,>(features: T[]) => ({ type: 'FeatureCollection' as const, features })
+  return { areas: fc(areas), spots: fc(spots), pins: fc(pins) }
 }
 
 type Props = { cells: CellMood[]; places: PlaceMood[]; selectedId: string | null; onSelect: (id: string | null) => void }
@@ -178,6 +235,7 @@ export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
     const d = moodData(data.current.cells, data.current.places, colors.current, data.current.selectedId, t)
     ;(map.getSource(AREAS) as GeoJSONSource).setData(d.areas)
     ;(map.getSource(SPOTS) as GeoJSONSource).setData(d.spots)
+    ;(map.getSource(PINS) as GeoJSONSource).setData(d.pins)
   }
   const paintRef = useRef(paint)
   paintRef.current = paint
@@ -211,7 +269,7 @@ export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
     })
 
     // Tap a bubble to see that place; tap anywhere else to close it.
-    const bubble = `${SPOTS}-bubble`
+    const bubble = `${PINS}-dot`
     map.on('click', (e) => {
       const hit = readyRef.current ? map.queryRenderedFeatures(e.point, { layers: [bubble] })[0] : undefined
       onSelectRef.current((hit?.properties?.id as string | undefined) ?? null)
@@ -238,7 +296,7 @@ export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
   }, [])
 
   // New data from the time slider, or a new selection.
-  useEffect(() => paintRef.current(performance.now()), [cells, places, selectedId])
+  useEffect(() => paintRef.current(reduce ? 0 : performance.now()), [cells, places, selectedId, reduce])
 
   // The glows breathe slowly.
   useEffect(() => {
