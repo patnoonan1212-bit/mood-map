@@ -1,19 +1,36 @@
-import { CheckIn } from './components/CheckIn'
-import { ThemeToggle } from './components/ThemeToggle'
+import { AnimatePresence, motion } from 'framer-motion'
+import { lazy, Suspense, useState } from 'react'
+import { TabBar, type Tab } from './components/TabBar'
+import CheckInScreen from './screens/CheckInScreen'
+import JournalScreen from './screens/JournalScreen'
+
+// The map library is large, so it only loads when someone opens the Map tab.
+const MapScreen = lazy(() => import('./screens/MapScreen'))
 
 export default function App() {
+  const [tab, setTab] = useState<Tab>('checkin')
+
   return (
-    <div className="min-h-full bg-[linear-gradient(180deg,var(--sky-top),var(--bg)_55%)]">
-      <main className="mx-auto flex max-w-xl flex-col gap-8 px-5 pt-[max(24px,env(safe-area-inset-top))] pb-16">
-        <header className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold tracking-wide text-ink-soft uppercase">Penn State · University Park</p>
-            <h1 className="text-2xl font-extrabold tracking-tight">Mood Map</h1>
-          </div>
-          <ThemeToggle />
-        </header>
-        <CheckIn />
-      </main>
+    <div className="relative h-full overflow-hidden">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.main
+          key={tab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className={`h-full ${tab === 'map' ? 'overflow-hidden' : 'overflow-y-auto'}`}
+        >
+          {tab === 'checkin' && <CheckInScreen onSeeMap={() => setTab('map')} />}
+          {tab === 'map' && (
+            <Suspense fallback={<div className="grid h-full place-items-center text-ink-soft">Loading the map…</div>}>
+              <MapScreen />
+            </Suspense>
+          )}
+          {tab === 'journal' && <JournalScreen />}
+        </motion.main>
+      </AnimatePresence>
+      <TabBar active={tab} onChange={setTab} />
     </div>
   )
 }

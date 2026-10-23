@@ -73,3 +73,50 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The time slider: a soft sunrise-to-twilight track with a big, easy-to-grab thumb. */
+.mood-range {
+  appearance: none;
+  height: 32px;
+  background: transparent;
+  cursor: pointer;
+}
+.mood-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mood-tired), var(--mood-sad), var(--mood-calm), var(--mood-joyful), var(--mood-energized));
+}
+.mood-range::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mood-tired), var(--mood-sad), var(--mood-calm), var(--mood-joyful), var(--mood-energized));
+}
+.mood-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 4px solid var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+.mood-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 4px solid var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Keep the map's small credit line soft and out of the way. */
+.maplibregl-ctrl-attrib {
+  background: var(--glass) !important;
+  color: var(--ink-soft);
+  border-radius: 999px !important;
+  font-family: inherit;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--ink-soft) !important;
+}

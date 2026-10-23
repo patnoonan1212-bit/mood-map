@@ -1,21 +1,22 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { greeting } from '../lib/greeting'
+import { addEntry, removeLastEntry } from '../lib/journal'
 import { moodById, NEEDS_CARE, type MoodId } from '../lib/moods'
 import { CalmCorner } from './CalmCorner'
 import { MoodFace } from './MoodFace'
 import { MoodPicker } from './MoodPicker'
 
-type Props = { onDone?: (mood: MoodId) => void }
+type Props = { onSeeMap?: () => void }
 
-export function CheckIn({ onDone }: Props) {
+export function CheckIn({ onSeeMap }: Props) {
   const [picked, setPicked] = useState<MoodId | null>(null)
   const [calmFor, setCalmFor] = useState<MoodId | null>(null)
 
   const pick = (mood: MoodId) => {
     if (picked) return
     setPicked(mood)
-    onDone?.(mood)
+    addEntry(mood)
     // Give the bounce a moment to play before the calm corner slides up.
     if (NEEDS_CARE.includes(mood)) setTimeout(() => setCalmFor(mood), 650)
   }
@@ -48,7 +49,10 @@ export function CheckIn({ onDone }: Props) {
             </div>
             <button
               type="button"
-              onClick={() => setPicked(null)}
+              onClick={() => {
+                removeLastEntry()
+                setPicked(null)
+              }}
               className="shrink-0 rounded-full px-3 py-2 font-bold text-accent"
             >
               Undo
@@ -56,6 +60,20 @@ export function CheckIn({ onDone }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {picked && onSeeMap && (
+        <motion.button
+          type="button"
+          onClick={onSeeMap}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          whileTap={{ scale: 0.95 }}
+          className="self-center rounded-full bg-accent px-7 py-3.5 text-lg font-extrabold text-accent-ink shadow-soft"
+        >
+          See the campus sky →
+        </motion.button>
+      )}
 
       <CalmCorner mood={calmFor} onClose={() => setCalmFor(null)} />
     </section>

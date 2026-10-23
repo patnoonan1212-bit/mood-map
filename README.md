@@ -20,13 +20,17 @@ npm run dev     # starts the app; open the link it prints, usually http://localh
 | `src/styles/tokens.css` | Every color, corner radius and shadow, for light and dark mode. Change the look here. |
 | `src/lib/moods.ts` | The six moods and their labels. |
 | `src/App.tsx` | The main screen. |
-| `src/components/` | Reusable pieces such as the light/dark toggle. |
+| `src/components/` | Reusable pieces: mood buttons, the map, the tab bar, and more. |
+| `src/screens/` | The three tabs: Check in, Map, Journal. |
+| `src/lib/campus.ts` | Where the map is centered (Penn State). Change this to move the app. |
+| `src/lib/sampleData.ts` | **Made-up check-ins for testing. Delete before launch.** |
+| `src/lib/journal.ts` | The private journal, saved only on the person's phone. |
 
 ## Progress
 
 - [x] 1. Project setup and design tokens
 - [x] 2. Mood check-in
-- [ ] 3. Map with sample data
+- [x] 3. Map with sample data (plus bottom tabs and the Journal)
 - [ ] 4. Supabase and real check-ins
 - [ ] 5. Privacy rules in the database
 - [ ] 6. Extra features
