@@ -39,6 +39,15 @@ const SPOTS: Spot[] = [
     mood: () => ({ calm: 7, joyful: 3 }) },
   { name: 'Beaver Stadium area', at: [40.8122, -77.8562], busy: 6, spread: 220,
     mood: () => ({ energized: 5, joyful: 5, stressed: 1 }) },
+  // Off campus: apartments and neighborhoods around State College.
+  { name: 'South side apartments', at: [40.7862, -77.8545], busy: 6, spread: 260,
+    mood: (h) => (night(h) ? { tired: 4, joyful: 3, calm: 2, sad: 1 } : { calm: 3, tired: 2, unmotivated: 2, motivated: 2 }) },
+  { name: 'Highlands neighborhood', at: [40.7880, -77.8695], busy: 4, spread: 260,
+    mood: (h) => (h >= 18 ? { joyful: 4, calm: 3, tired: 2 } : { calm: 3, motivated: 2, tired: 2, stressed: 1 }) },
+  { name: 'East College Ave', at: [40.7960, -77.8380], busy: 4, spread: 280,
+    mood: () => ({ calm: 3, tired: 3, stressed: 2, unmotivated: 2, joyful: 1 }) },
+  { name: 'North Atherton', at: [40.8190, -77.8820], busy: 3, spread: 320,
+    mood: () => ({ calm: 3, motivated: 2, tired: 2, stressed: 2, sad: 1 }) },
 ]
 
 // How busy campus is at each hour of the day (0 = midnight), from 0 to 1.
@@ -59,8 +68,24 @@ function pickMood(weights: Partial<Record<MoodId, number>>, r: number): MoodId {
   return 'calm'
 }
 
-/** 24 hours of fake hourly counts, ending at `now`. Same output all day, so screens don't jump. */
-export function makeSampleData(now = new Date()): CellHour[] {
+// How campus as a whole tends to feel at each hour, for check-ins away from the named spots.
+const anywhere = (h: number): Partial<Record<MoodId, number>> =>
+  h < 7 || h >= 23
+    ? { tired: 5, calm: 3, sad: 1, unmotivated: 2, stressed: 1 }
+    : h < 12
+      ? { tired: 3, calm: 3, motivated: 3, energized: 2, joyful: 2, stressed: 2, unmotivated: 1 }
+      : h < 18
+        ? { calm: 3, joyful: 3, energized: 3, motivated: 2, stressed: 3, tired: 2, unmotivated: 1, sad: 1 }
+        : { joyful: 4, calm: 3, energized: 2, tired: 3, stressed: 2, sad: 1, unmotivated: 1 }
+
+// Rough box around central campus and downtown, for scattered check-ins.
+const SCATTER = { lat: [40.7905, 40.8115], lng: [-77.8735, -77.8525] }
+
+/**
+ * 24 hours of fake hourly counts, ending at `now`. Same output all day, so screens don't jump.
+ * `scale` multiplies how many people check in (1 is a small pilot, about 8.5 is 10,000 people a day).
+ */
+export function makeSampleData(now = new Date(), scale = 1): CellHour[] {
   const day = Math.floor(now.getTime() / 864e5)
   const rand = rng(day * 7919 + 13)
   const rows = new Map<string, CellHour>()
@@ -68,11 +93,11 @@ export function makeSampleData(now = new Date()): CellHour[] {
   for (let hoursAgo = 0; hoursAgo < 24; hoursAgo++) {
     const hour = (now.getHours() - hoursAgo + 24) % 24
     for (const spot of SPOTS) {
-      const n = Math.round(spot.busy * ACTIVITY[hour] * (0.6 + rand() * 0.8))
+      const n = Math.round(spot.busy * scale * ACTIVITY[hour] * (0.6 + rand() * 0.8))
       const weights = spot.mood(hour)
       for (let i = 0; i < n; i++) {
         // Random point within `spread` meters of the spot.
-        const d = Math.sqrt(rand()) * spot.spread
+        const d = Math.sqrt(rand()) * spot.spread * (scale > 1 ? 1.4 : 1)
         const a = rand() * Math.PI * 2
         const lat = spot.at[0] + (d * Math.cos(a)) / 111_320
         const lng = spot.at[1] + (d * Math.sin(a)) / (111_320 * Math.cos((spot.at[0] * Math.PI) / 180))
@@ -82,6 +107,17 @@ export function makeSampleData(now = new Date()): CellHour[] {
         row.counts[pickMood(weights, rand())]++
         rows.set(key, row)
       }
+    }
+    // On a busy campus, people check in everywhere: dorms, walkways, apartments downtown.
+    const scattered = scale > 1 ? Math.round(30 * scale * ACTIVITY[hour] * (0.8 + rand() * 0.4)) : 0
+    for (let i = 0; i < scattered; i++) {
+      const lat = SCATTER.lat[0] + rand() * (SCATTER.lat[1] - SCATTER.lat[0])
+      const lng = SCATTER.lng[0] + rand() * (SCATTER.lng[1] - SCATTER.lng[0])
+      const cell = toCell(lat, lng)
+      const key = `${cell}:${hoursAgo}`
+      const row = rows.get(key) ?? { cell, hoursAgo, counts: emptyCounts() }
+      row.counts[pickMood(anywhere(hour), rand())]++
+      rows.set(key, row)
     }
   }
   return [...rows.values()]

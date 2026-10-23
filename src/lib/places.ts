@@ -1,8 +1,11 @@
 /**
  * Named spots on campus. Each area's check-ins are grouped under the nearest spot,
- * so people see "Pattee Library" instead of an abstract grid.
+ * so people see "Pattee Library" instead of an abstract grid. Check-ins farther away (off campus)
+ * are grouped into neighborhood-sized areas named by where they are, like "Off campus · 1.2 km SW".
  * Coordinates are [longitude, latitude]. Edit this list to fit your pilot area.
  */
+import { cellToLatLng, cellToParent } from 'h3-js'
+import { CAMPUS } from './campus'
 import { MIN_CHECKINS_TO_SHOW } from './grid'
 import { emptyCounts, sumCounts, type CellMood, type MoodCounts } from './aggregate'
 import { MOODS } from './moods'
@@ -48,11 +51,26 @@ export function nearestPlace(lngLat: [number, number]) {
 }
 
 /** Add up areas into named places. Places under the privacy minimum are left out. */
+// Off-campus areas: H3 resolution 7 hexagons, about 2.5 km across (a neighborhood).
+const OFF_CAMPUS_RESOLUTION = 7
+const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+
+/** A place for check-ins that aren't near any named campus spot. */
+function offCampusPlace(cell: string): Place {
+  const parent = cellToParent(cell, OFF_CAMPUS_RESOLUTION)
+  const [lat, lng] = cellToLatLng(parent)
+  const at: [number, number] = [lng, lat]
+  const km = meters(at, CAMPUS.center) / 1000
+  const dx = (lng - CAMPUS.center[0]) * Math.cos((lat * Math.PI) / 180)
+  const dy = lat - CAMPUS.center[1]
+  const dir = COMPASS[Math.round(((Math.atan2(dx, dy) * 180) / Math.PI + 360) / 45) % 8]
+  return { id: `off-${parent}`, name: `Off campus · ${km.toFixed(1)} km ${dir}`, at }
+}
+
 export function groupByPlace(cells: CellMood[]): PlaceMood[] {
   const byId = new Map<string, PlaceMood>()
   for (const c of cells) {
-    const p = nearestPlace(c.lngLat)
-    if (!p) continue
+    const p = nearestPlace(c.lngLat) ?? offCampusPlace(c.cell)
     const g = byId.get(p.id) ?? { ...p, counts: emptyCounts(), total: 0 }
     for (const m of MOODS) g.counts[m.id] += c.counts[m.id]
     g.total = sumCounts(g.counts)

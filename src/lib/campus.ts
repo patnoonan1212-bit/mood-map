@@ -4,9 +4,9 @@ export const CAMPUS = {
   areaName: 'Campus',
   center: [-77.862, 40.7995] as [number, number], // [longitude, latitude]
   zoom: 14.4,
-  // People can't scroll the map far away from the pilot area.
+  // The map covers State College and nearby neighborhoods, so off-campus moods show too.
   maxBounds: [
-    [-77.92, 40.765],
-    [-77.81, 40.835],
+    [-78.0, 40.72],
+    [-77.74, 40.88],
   ] as [[number, number], [number, number]],
 }

@@ -1,26 +1,21 @@
 import { AnimatePresence } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { CampusCard } from '../components/CampusCard'
 import { MoodMap } from '../components/MoodMap'
 import { PlaceCard } from '../components/PlaceCard'
 import { PlaceList } from '../components/PlaceList'
 import { TimeScrubber } from '../components/TimeScrubber'
 import type { MapView } from '../components/ViewSwitch'
-import { cellsAt, sumCounts, totalsOf } from '../lib/aggregate'
 import { timeLabel } from '../lib/feelings'
-import { groupByPlace } from '../lib/places'
-import { makeSampleData } from '../lib/sampleData'
+import { USING_SAMPLE_DATA, useCampusAt } from '../lib/campusNow'
 
 export default function MapScreen() {
-  // Milestone 3 uses made-up data. Milestone 4 swaps this for real check-ins from the database.
-  const rows = useMemo(() => makeSampleData(), [])
   const [hoursAgo, setHoursAgo] = useState(0)
   const [view, setView] = useState<MapView>('map')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  const cells = useMemo(() => cellsAt(rows, hoursAgo), [rows, hoursAgo])
-  const places = useMemo(() => groupByPlace(cells), [cells])
-  const totals = useMemo(() => totalsOf(cells), [cells])
+  // Sample data for now; Milestone 4 swaps in real check-ins inside useCampusAt.
+  const { cells, places, totals, total } = useCampusAt(hoursAgo)
   const selected = places.find((p) => p.id === selectedId) ?? null
 
   const [hasPicked, setHasPicked] = useState(false)
@@ -41,9 +36,9 @@ export default function MapScreen() {
         <div className="pointer-events-auto mx-auto w-full max-w-lg">
           <CampusCard
             counts={totals}
-            total={sumCounts(totals)}
+            total={total}
             when={timeLabel(hoursAgo)}
-            isSample
+            isSample={USING_SAMPLE_DATA}
             view={view}
             onView={(v) => {
               setView(v)

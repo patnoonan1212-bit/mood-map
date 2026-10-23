@@ -4,6 +4,7 @@ import { USING_SAMPLE_DATA, useSameMoodStats } from '../lib/campusNow'
 import { currentStreak, useJournal } from '../lib/journal'
 import { moodById, type MoodId } from '../lib/moods'
 import { MoodFace } from './MoodFace'
+import { DemoSwitch } from './DemoSwitch'
 import { MotivationCard } from './MotivationCard'
 import { NoteCard } from './NoteCard'
 import { SleepCard } from './SleepCard'
@@ -69,7 +70,7 @@ export function MoodResult({ mood, onSeeMap, onChange, onBreathe }: Props) {
         <section className="flex flex-col gap-2" aria-label="How campus compares">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-extrabold tracking-wider text-ink-soft uppercase">Campus right now</h3>
-            {USING_SAMPLE_DATA && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-bold text-accent">Sample data</span>}
+            {USING_SAMPLE_DATA && <DemoSwitch />}
           </div>
           <div className="grid grid-cols-2 gap-3">
             {stats.people > 0 ? (

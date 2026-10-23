@@ -5,14 +5,25 @@
 import { useMemo } from 'react'
 import { cellsAt, sumCounts, totalsOf, type CellHour } from './aggregate'
 import { groupByPlace } from './places'
+import { DEMO_SIZES, useDemoSize } from './demo'
 import { makeSampleData } from './sampleData'
 import type { MoodId } from './moods'
 
 export const USING_SAMPLE_DATA = true
 
-let cached: CellHour[] | null = null
+const cache = new Map<string, CellHour[]>()
 export function useCampusRows() {
-  return useMemo(() => (cached ??= makeSampleData()), [])
+  const size = useDemoSize()
+  return useMemo(() => {
+    if (!cache.has(size)) cache.set(size, makeSampleData(new Date(), DEMO_SIZES[size].scale))
+    return cache.get(size)!
+  }, [size])
+}
+
+/** Check-ins over the whole last day. */
+export function useDayTotal() {
+  const rows = useCampusRows()
+  return useMemo(() => rows.reduce((n, r) => n + sumCounts(r.counts), 0), [rows])
 }
 
 export function useCampusAt(hoursAgo: number) {
