@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { greeting } from '../lib/greeting'
-import { addEntry, removeLastEntry } from '../lib/journal'
+import { addEntry, currentStreak, removeLastEntry, useJournal } from '../lib/journal'
 import { moodById, NEEDS_CARE, type MoodId } from '../lib/moods'
 import { CalmCorner } from './CalmCorner'
 import { MoodFace } from './MoodFace'
@@ -12,11 +12,15 @@ type Props = { onSeeMap?: () => void }
 export function CheckIn({ onSeeMap }: Props) {
   const [picked, setPicked] = useState<MoodId | null>(null)
   const [calmFor, setCalmFor] = useState<MoodId | null>(null)
+  const streak = currentStreak(useJournal().entries)
+  const doneRef = useRef<HTMLDivElement>(null)
 
   const pick = (mood: MoodId) => {
     if (picked) return
     setPicked(mood)
     addEntry(mood)
+    // Bring the thank-you, streak and map button into view.
+    setTimeout(() => doneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350)
     // Give the bounce a moment to play before the calm corner slides up.
     if (NEEDS_CARE.includes(mood)) setTimeout(() => setCalmFor(mood), 650)
   }
@@ -33,6 +37,7 @@ export function CheckIn({ onSeeMap }: Props) {
 
       <MoodPicker selected={picked} onPick={pick} disabled={picked !== null} />
 
+      <div ref={doneRef} className="flex flex-col gap-6">
       <AnimatePresence>
         {picked && (
           <motion.div
@@ -45,7 +50,12 @@ export function CheckIn({ onSeeMap }: Props) {
             <MoodFace mood={picked} className="size-12 shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="text-lg font-bold">Thanks. You're counted as {moodById(picked).label.toLowerCase()}.</p>
-              <p className="text-ink-soft">Your tap shows up on the campus map in a few minutes.</p>
+              <p className="flex items-start gap-1.5 font-bold text-ink-soft">
+                <svg viewBox="0 0 24 24" className="mt-0.5 size-5 shrink-0 text-[var(--mood-energized)]" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2.5c.6 3.2-1.3 4.9-2.8 6.6C7.6 10.9 6 12.7 6 15.2A6 6 0 0 0 18 15c0-2.6-1.4-4.3-2.6-5.6.1 1.6-.5 2.8-1.6 3.3.4-3.6-.6-7.4-1.8-10.2Z" />
+                </svg>
+                {streak === 1 ? 'Day 1. Your streak starts now.' : `${streak} days in a row. Keep it going!`}
+              </p>
             </div>
             <button
               type="button"
@@ -74,6 +84,8 @@ export function CheckIn({ onSeeMap }: Props) {
           See how campus feels →
         </motion.button>
       )}
+
+      </div>
 
       <CalmCorner mood={calmFor} onClose={() => setCalmFor(null)} />
     </section>

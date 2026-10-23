@@ -146,6 +146,12 @@ export function sleepInsight(j: Journal) {
   return { rested: avg(groups.rested), short: avg(groups.short) }
 }
 
+/** True once the person has checked in today. The live map unlocks after that. */
+export const checkedInToday = (entries: JournalEntry[], now = new Date()) =>
+  entries.some((e) => dayKey(new Date(e.at)) === dayKey(now))
+
+export const currentStreak = (entries: JournalEntry[]) => streaks(new Set(byDay(entries).keys())).current
+
 export const moodLabel = (id: MoodId) => MOODS.find((m) => m.id === id)!.label
 
 /** Example journal for the preview button. Never saved. */

@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
-import { headline, sentence } from '../lib/feelings'
+import { headline, sentence, shares } from '../lib/feelings'
 import type { PlaceMood } from '../lib/places'
 import { MoodBreakdown } from './MoodBreakdown'
-import { MoodRing } from './MoodRing'
+import { MoodFace } from './MoodFace'
 
 /** Details for one place, shown when its bubble is tapped. */
 export function PlaceCard({ place, onClose }: { place: PlaceMood; onClose: () => void }) {
@@ -17,7 +17,7 @@ export function PlaceCard({ place, onClose }: { place: PlaceMood; onClose: () =>
       aria-label={`How ${place.name} feels`}
     >
       <header className="flex items-start gap-3">
-        <MoodRing counts={place.counts} size={60} ring={5} />
+        <MoodFace mood={shares(place.counts)[0].mood.id} className="size-14 shrink-0" />
         <div className="min-w-0 flex-1">
           <h2 className="text-xl leading-tight font-extrabold">{place.name}</h2>
           <p className="font-bold">{headline(place.counts)}</p>

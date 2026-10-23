@@ -121,7 +121,7 @@ body {
   color: var(--ink-soft) !important;
 }
 
-/* Place bubbles on the map gently bob, each a little out of step with the others. */
+/* Place markers: a face plus a name with a white halo, like labels in a map app. */
 .mood-pin {
   background: none;
   border: 0;
@@ -129,10 +129,10 @@ body {
   cursor: pointer;
   font: inherit;
 }
-.mood-bubble {
-  animation: bob 4.2s ease-in-out infinite;
+.place-name {
+  text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 8px #fff;
 }
-.mood-pin[data-label='hidden'] .bubble-label {
+.mood-pin[data-label='hidden'] .place-name {
   display: none;
 }
 @keyframes bob {

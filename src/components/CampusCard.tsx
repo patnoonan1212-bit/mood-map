@@ -2,7 +2,7 @@ import type { MoodCounts } from '../lib/aggregate'
 import { headline, sentence, shares } from '../lib/feelings'
 import type { MapView } from './ViewSwitch'
 import { ViewSwitch } from './ViewSwitch'
-import { MoodRing } from './MoodRing'
+import { MoodFace } from './MoodFace'
 
 type Props = { counts: MoodCounts; total: number; when: string; isSample: boolean; view: MapView; onView: (v: MapView) => void }
 
@@ -19,7 +19,7 @@ export function CampusCard({ counts, total, when, isSample, view, onView }: Prop
         <ViewSwitch value={view} onChange={onView} />
       </div>
       <div className="flex items-center gap-3" aria-live="polite">
-        {has && <MoodRing counts={counts} size={56} ring={5} />}
+        {has && <MoodFace mood={shares(counts)[0].mood.id} className="size-14 shrink-0" />}
         <div className="min-w-0">
           <p className="text-xl leading-tight font-extrabold">{headline(counts)}</p>
           <p className="text-ink-soft">{sentence(counts, 'people on campus')}</p>

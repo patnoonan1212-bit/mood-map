@@ -33,7 +33,7 @@ export default function MapScreen() {
 
   return (
     <div className="relative h-full overflow-hidden">
-      <MoodMap places={places} selectedId={selectedId} onSelect={choose} />
+      <MoodMap cells={cells} places={places} selectedId={selectedId} onSelect={choose} />
 
       {view === 'list' && <div className="absolute inset-0 bg-bg/85 backdrop-blur-md" aria-hidden="true" />}
 

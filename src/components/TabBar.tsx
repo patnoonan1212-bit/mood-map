@@ -38,7 +38,7 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   },
 ]
 
-export function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
+export function TabBar({ active, onChange, mapLocked }: { active: Tab; onChange: (t: Tab) => void; mapLocked?: boolean }) {
   return (
     <nav
       aria-label="Main"
@@ -66,6 +66,14 @@ export function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) =
                   {t.icon}
                 </svg>
                 {t.label}
+                {t.id === 'map' && mapLocked && (
+                  <span className="absolute top-1.5 right-[calc(50%-22px)] grid size-5 place-items-center rounded-full bg-ink text-surface" aria-label="locked until you check in">
+                    <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+                      <rect x="5" y="11" width="14" height="9" rx="2" />
+                      <path d="M8.5 11V8.5a3.5 3.5 0 0 1 7 0V11" />
+                    </svg>
+                  </span>
+                )}
               </button>
             </li>
           )
