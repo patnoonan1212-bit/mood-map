@@ -1,15 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { useReducedMotion } from 'framer-motion'
-import { createRoot, type Root } from 'react-dom/client'
-import { AttributionControl, Map as MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl'
+import { AttributionControl, Map as MapLibreMap, setWorkerUrl, type GeoJSONSource, type MapLayerMouseEvent } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { CellMood } from '../lib/aggregate'
 import { CAMPUS } from '../lib/campus'
-import { headline, shares } from '../lib/feelings'
+import { shares } from '../lib/feelings'
 import { MOODS, type MoodId } from '../lib/moods'
 import { PLACES, type PlaceMood } from '../lib/places'
-import { MoodFace } from './MoodFace'
 
 setWorkerUrl(workerUrl)
 
@@ -33,12 +31,19 @@ function tidyBaseMap(map: MapLibreMap) {
   }
 }
 
+/** Grows with zoom so glows and bubbles keep roughly the same size on the ground. */
+const byZoom = (atZ13: number, atZ17: number) =>
+  ['interpolate', ['exponential', 1.6], ['zoom'], 13, ['*', atZ13, ['get', 's']], 17, ['*', atZ17, ['get', 's']]] as unknown as number
+
 /**
- * Two layers of soft glow, drawn on the ground beneath buildings and labels:
+ * The mood layers, drawn on the ground beneath buildings and labels:
  *  - areas: every part of campus with enough check-ins, a gentle glow in its main mood
- *  - spots: the popular places, a bigger, stronger glow that the areas around them melt into
+ *  - glow: a big soft halo around each popular place, which the areas melt into
+ *  - bubble: a glossy colored bubble at the heart of each popular place, with a white rim
+ *  - shine: a soft highlight on each bubble so it looks round
+ *  - names: place names under the bubbles (they hide themselves where they would overlap)
  */
-function addGlowLayers(map: MapLibreMap) {
+function addMoodLayers(map: MapLibreMap) {
   const before = map.getStyle().layers?.find((l) => l.type === 'symbol' || l.type === 'fill-extrusion')?.id
   map.addSource(AREAS, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
   map.addSource(SPOTS, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
@@ -49,9 +54,9 @@ function addGlowLayers(map: MapLibreMap) {
       source: AREAS,
       paint: {
         'circle-color': ['get', 'color'],
-        'circle-radius': ['interpolate', ['exponential', 1.6], ['zoom'], 13, ['*', 24, ['get', 's']], 17, ['*', 157, ['get', 's']]],
+        'circle-radius': byZoom(24, 157),
         'circle-blur': 1,
-        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.42, 17, 0.3],
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.45, 17, 0.32],
         'circle-pitch-alignment': 'map',
       },
     },
@@ -59,23 +64,72 @@ function addGlowLayers(map: MapLibreMap) {
   )
   map.addLayer(
     {
-      id: SPOTS,
+      id: `${SPOTS}-glow`,
       type: 'circle',
       source: SPOTS,
       paint: {
         'circle-color': ['get', 'color'],
-        'circle-radius': ['interpolate', ['exponential', 1.6], ['zoom'], 13, ['*', 46, ['get', 's']], 17, ['*', 301, ['get', 's']]],
+        'circle-radius': byZoom(50, 320),
         'circle-blur': 1,
-        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.6, 17, 0.42],
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.62, 17, 0.45],
         'circle-pitch-alignment': 'map',
       },
     },
     before,
   )
+  // Bubbles and names sit above everything so they're easy to see and tap.
+  map.addLayer({
+    id: `${SPOTS}-bubble`,
+    type: 'circle',
+    source: SPOTS,
+    paint: {
+      'circle-color': ['get', 'color'],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, ['*', 9, ['get', 'b']], 15, ['*', 15, ['get', 'b']], 17, ['*', 24, ['get', 'b']]],
+      'circle-blur': 0.12,
+      'circle-opacity': 0.92,
+      'circle-stroke-color': '#ffffff',
+      'circle-stroke-width': ['case', ['boolean', ['get', 'selected'], false], 4, 2.5],
+      'circle-stroke-opacity': 0.95,
+    },
+  })
+  map.addLayer({
+    id: `${SPOTS}-shine`,
+    type: 'circle',
+    source: SPOTS,
+    paint: {
+      'circle-color': '#ffffff',
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, ['*', 3.5, ['get', 'b']], 15, ['*', 6, ['get', 'b']], 17, ['*', 9, ['get', 'b']]],
+      'circle-blur': 0.9,
+      'circle-opacity': 0.75,
+      'circle-translate': ['interpolate', ['linear'], ['zoom'], 13, ['literal', [-2.5, -2.5]], 15, ['literal', [-4.5, -4.5]], 17, ['literal', [-7, -7]]],
+    },
+  })
+  // Place names, if the base map provides fonts.
+  const font = map
+    .getStyle()
+    .layers?.map((l) => (l.type === 'symbol' ? (l.layout?.['text-font'] as string[] | undefined) : undefined))
+    .find((f) => Array.isArray(f))
+  if (map.getStyle().glyphs && font) {
+    map.addLayer({
+      id: `${SPOTS}-names`,
+      type: 'symbol',
+      source: SPOTS,
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-font': font,
+        'text-size': ['interpolate', ['linear'], ['zoom'], 13, 11, 16, 14],
+        'text-offset': [0, 1.8],
+        'text-anchor': 'top',
+        'text-padding': 4,
+        'symbol-sort-key': ['-', 0, ['get', 'total']],
+      },
+      paint: { 'text-color': '#2b2130', 'text-halo-color': '#ffffff', 'text-halo-width': 2 },
+    })
+  }
 }
 
-/** Glow features. `t` (ms) makes them breathe slowly. */
-function glowData(cells: CellMood[], places: PlaceMood[], colors: Record<MoodId, string>, t: number) {
+/** Layer data. `t` (ms) makes the glows breathe slowly. */
+function moodData(cells: CellMood[], places: PlaceMood[], colors: Record<MoodId, string>, selectedId: string | null, t: number) {
   const breathe = (i: number, amount: number) => 1 + amount * Math.sin(t / 2600 + i * 1.3)
   const areas = cells.map((c, i) => ({
     type: 'Feature' as const,
@@ -85,7 +139,16 @@ function glowData(cells: CellMood[], places: PlaceMood[], colors: Record<MoodId,
   const spots = places.map((p, i) => ({
     type: 'Feature' as const,
     geometry: { type: 'Point' as const, coordinates: p.at },
-    properties: { color: colors[topMood(p.counts)], s: Math.min(1.8, 0.7 + Math.sqrt(p.total) / 6) * breathe(i + 50, 0.08) },
+    properties: {
+      id: p.id,
+      name: p.name,
+      total: p.total,
+      selected: p.id === selectedId,
+      color: colors[topMood(p.counts)],
+      s: Math.min(1.8, 0.7 + Math.sqrt(p.total) / 6) * breathe(i + 50, 0.08),
+      // Bubble size: busier places get bigger bubbles; the chosen one grows a little.
+      b: Math.min(1.5, 0.75 + Math.sqrt(p.total) / 14) * (p.id === selectedId ? 1.25 : 1) * breathe(i + 90, 0.03),
+    },
   }))
   return {
     areas: { type: 'FeatureCollection' as const, features: areas },
@@ -93,76 +156,31 @@ function glowData(cells: CellMood[], places: PlaceMood[], colors: Record<MoodId,
   }
 }
 
-/** A place marker in the style of a map app: a face in a white circle, with the name beside it. */
-function PlaceMarker({ place, selected }: { place: PlaceMood; selected: boolean }) {
-  const mood = topMood(place.counts)
-  return (
-    <span className="flex items-center gap-1.5">
-      <span
-        className="grid size-11 shrink-0 place-items-center rounded-full bg-white transition-transform duration-300"
-        style={{
-          transform: selected ? 'scale(1.25)' : undefined,
-          boxShadow: `0 0 0 ${selected ? 3 : 2}px var(--mood-${mood}), 0 6px 16px rgb(40 30 50 / 0.25)`,
-        }}
-      >
-        <MoodFace mood={mood} className="size-10" />
-      </span>
-      <span className="place-name text-[13px] leading-tight font-extrabold whitespace-nowrap text-[#2b2130]">{place.name}</span>
-    </span>
-  )
-}
-
 type Props = { cells: CellMood[]; places: PlaceMood[]; selectedId: string | null; onSelect: (id: string | null) => void }
-type Pin = { marker: Marker; root: Root; el: HTMLButtonElement }
 
 // Room left for the cards floating over the map, in pixels.
-const FIT_PADDING = { top: 230, bottom: 200, left: 30, right: 60 }
+const FIT_PADDING = { top: 230, bottom: 200, left: 40, right: 40 }
 
 export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const readyRef = useRef(false)
-  const pins = useRef(new Map<string, Pin>())
-  const data = useRef({ cells, places })
+  const data = useRef({ cells, places, selectedId })
   const colors = useRef(moodColors())
   const onSelectRef = useRef(onSelect)
   const reduce = useReducedMotion()
-  data.current = { cells, places }
+  data.current = { cells, places, selectedId }
   onSelectRef.current = onSelect
 
   const paint = (t: number) => {
     const map = mapRef.current
     if (!map || !readyRef.current) return
-    const d = glowData(data.current.cells, data.current.places, colors.current, t)
+    const d = moodData(data.current.cells, data.current.places, colors.current, data.current.selectedId, t)
     ;(map.getSource(AREAS) as GeoJSONSource).setData(d.areas)
     ;(map.getSource(SPOTS) as GeoJSONSource).setData(d.spots)
   }
   const paintRef = useRef(paint)
   paintRef.current = paint
-
-  /** Place names show where they fit; busiest places get first pick, the chosen one always shows. */
-  const declutter = () => {
-    const map = mapRef.current
-    if (!map) return
-    const taken: { x1: number; y1: number; x2: number; y2: number }[] = []
-    const hits = (r: (typeof taken)[number]) => taken.some((o) => r.x1 < o.x2 && r.x2 > o.x1 && r.y1 < o.y2 && r.y2 > o.y1)
-    const ordered = [...data.current.places].sort((a, b) => Number(b.id === selectedId) - Number(a.id === selectedId) || b.total - a.total)
-    for (const p of ordered) {
-      const { x, y } = map.project(p.at)
-      taken.push({ x1: x - 24, y1: y - 24, x2: x + 24, y2: y + 24 })
-    }
-    for (const p of ordered) {
-      const pin = pins.current.get(p.id)
-      if (!pin) continue
-      const { x, y } = map.project(p.at)
-      const label = { x1: x + 26, y1: y - 10, x2: x + 30 + p.name.length * 7.4, y2: y + 10 }
-      const show = p.id === selectedId || !hits(label)
-      pin.el.dataset.label = show ? 'shown' : 'hidden'
-      if (show) taken.push(label)
-    }
-  }
-  const declutterRef = useRef(declutter)
-  declutterRef.current = declutter
 
   // Create the map once.
   useEffect(() => {
@@ -187,17 +205,21 @@ export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
     map.addControl(new AttributionControl({ compact: true }), 'top-right')
     map.on('load', () => {
       tidyBaseMap(map)
-      addGlowLayers(map)
+      addMoodLayers(map)
       readyRef.current = true
       paintRef.current(0)
-      declutterRef.current()
     })
-    map.on('click', () => onSelectRef.current(null))
-    let raf = 0
-    map.on('move', () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => declutterRef.current())
+
+    // Tap a bubble to see that place; tap anywhere else to close it.
+    const bubble = `${SPOTS}-bubble`
+    map.on('click', (e) => {
+      const hit = readyRef.current ? map.queryRenderedFeatures(e.point, { layers: [bubble] })[0] : undefined
+      onSelectRef.current((hit?.properties?.id as string | undefined) ?? null)
     })
+    map.on('mouseenter', bubble, (e: MapLayerMouseEvent) => {
+      if (e.features?.length) map.getCanvas().style.cursor = 'pointer'
+    })
+    map.on('mouseleave', bubble, () => (map.getCanvas().style.cursor = ''))
     mapRef.current = map
 
     // Mood colors are a little brighter in dark mode.
@@ -207,23 +229,16 @@ export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
 
-    const current = pins.current
     return () => {
       observer.disconnect()
-      cancelAnimationFrame(raf)
-      for (const p of current.values()) {
-        p.marker.remove()
-        queueMicrotask(() => p.root.unmount())
-      }
-      current.clear()
       readyRef.current = false
       map.remove()
       mapRef.current = null
     }
   }, [])
 
-  // New data from the time slider.
-  useEffect(() => paintRef.current(performance.now()), [cells, places])
+  // New data from the time slider, or a new selection.
+  useEffect(() => paintRef.current(performance.now()), [cells, places, selectedId])
 
   // The glows breathe slowly.
   useEffect(() => {
@@ -239,41 +254,6 @@ export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [reduce])
-
-  // Place markers.
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map) return
-    const seen = new Set<string>()
-    for (const place of places) {
-      seen.add(place.id)
-      let pin = pins.current.get(place.id)
-      if (!pin) {
-        const button = document.createElement('button')
-        button.type = 'button'
-        button.className = 'mood-pin'
-        button.addEventListener('click', (e) => {
-          e.stopPropagation()
-          onSelectRef.current(place.id)
-        })
-        // Anchor on the face (22px in from the left edge) so it sits exactly on the place.
-        const marker = new Marker({ element: button, anchor: 'left', offset: [-22, 0] }).setLngLat(place.at).addTo(map)
-        pin = { marker, root: createRoot(button), el: button }
-        pins.current.set(place.id, pin)
-      }
-      pin.el.setAttribute('aria-label', `${place.name}: ${headline(place.counts).toLowerCase()}, ${place.total} check-ins`)
-      pin.el.setAttribute('aria-pressed', String(place.id === selectedId))
-      pin.el.style.zIndex = place.id === selectedId ? '5' : '1'
-      pin.root.render(<PlaceMarker place={place} selected={place.id === selectedId} />)
-    }
-    for (const [id, pin] of pins.current) {
-      if (seen.has(id)) continue
-      pin.marker.remove()
-      queueMicrotask(() => pin.root.unmount())
-      pins.current.delete(id)
-    }
-    declutterRef.current()
-  }, [places, selectedId])
 
   // Glide to a chosen place, keeping it above the details card.
   useEffect(() => {
@@ -291,7 +271,11 @@ export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
   return (
     <div className="absolute inset-0 isolate bg-[#f2efe9]">
       {/* MapLibre makes its container position: relative, so it gets its own full-size box. */}
-      <div ref={el} className="h-full w-full" aria-label={`Map of ${CAMPUS.name}. Colored glows show how people feel in each area.`} />
+      <div
+        ref={el}
+        className="h-full w-full"
+        aria-label={`Map of ${CAMPUS.name}. Colored bubbles show how people feel at each place. Use the List view for the same information as text.`}
+      />
     </div>
   )
 }

@@ -64,7 +64,7 @@ export default function MapScreen() {
           </AnimatePresence>
           {view === 'map' && !selected && !hasPicked && places.length > 0 && (
             <p className="self-center rounded-full bg-ink px-4 py-2 text-sm font-bold text-surface shadow-soft">
-              Tap a face to see how that place feels
+              Tap a bubble to see how that place feels
             </p>
           )}
           {!(selected && view === 'map') && <TimeScrubber hoursAgo={hoursAgo} onChange={setHoursAgo} />}

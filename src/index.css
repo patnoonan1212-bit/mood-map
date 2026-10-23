@@ -152,20 +152,6 @@ body {
   color: var(--ink-soft) !important;
 }
 
-/* Place markers: a face plus a name with a white halo, like labels in a map app. */
-.mood-pin {
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  font: inherit;
-}
-.place-name {
-  text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 8px #fff;
-}
-.mood-pin[data-label='hidden'] .place-name {
-  display: none;
-}
 @keyframes bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
