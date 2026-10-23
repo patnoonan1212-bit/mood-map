@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { MOODS, type MoodId } from './moods'
 
-export type JournalEntry = { at: string; mood: MoodId } // at = ISO time
+export type JournalEntry = { at: string; mood: MoodId; note?: string } // at = ISO time
 export type DayExtras = { sleepHours?: number; activeMinutes?: number }
 export type Journal = { entries: JournalEntry[]; days: Record<string, DayExtras> } // days keyed by YYYY-MM-DD
 
@@ -48,6 +48,24 @@ export function addEntry(mood: MoodId, at = new Date()) {
 export function removeLastEntry() {
   const j = read()
   j.entries.pop()
+  write(j)
+}
+
+/** Add or change the note on the most recent check-in. */
+export function setLastNote(note: string) {
+  const j = read()
+  const last = j.entries[j.entries.length - 1]
+  if (!last) return
+  last.note = note.trim() || undefined
+  write(j)
+}
+
+/** Change the note on any check-in, found by its time. */
+export function setNote(at: string, note: string) {
+  const j = read()
+  const e = j.entries.find((x) => x.at === at)
+  if (!e) return
+  e.note = note.trim() || undefined
   write(j)
 }
 
