@@ -28,7 +28,9 @@
   --mood-joyful: #f5b72c;
   --mood-calm: #35ab9b;
   --mood-energized: #f7844a;
+  --mood-motivated: #5db83a;
   --mood-tired: #9581d9;
+  --mood-unmotivated: #a69a8e;
   --mood-stressed: #d84c3c;
   --mood-sad: #5f8fd0;
 
@@ -36,7 +38,9 @@
   --map-mood-joyful: #ffbf00;
   --map-mood-calm: #00b39f;
   --map-mood-energized: #ff6b1a;
+  --map-mood-motivated: #3cc21a;
   --map-mood-tired: #8a5cf6;
+  --map-mood-unmotivated: #8f8276;
   --map-mood-stressed: #f0302a;
   --map-mood-sad: #2f7bf5;
 
@@ -78,7 +82,9 @@
   --mood-joyful: #f8c845;
   --mood-calm: #4fc7b6;
   --mood-energized: #fb9358;
+  --mood-motivated: #74d052;
   --mood-tired: #a994ee;
+  --mood-unmotivated: #b8ada2;
   --mood-stressed: #ec6450;
   --mood-sad: #78a6ec;
 

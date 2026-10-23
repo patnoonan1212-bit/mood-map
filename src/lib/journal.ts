@@ -12,7 +12,7 @@ const KEY = 'moodmap.journal.v1'
 const EVENT = 'moodmap:journal'
 
 /** How good each mood feels, 0 to 100. Used for the mood score. */
-export const MOOD_SCORE: Record<MoodId, number> = { joyful: 100, energized: 85, calm: 80, tired: 45, stressed: 25, sad: 15 }
+export const MOOD_SCORE: Record<MoodId, number> = { joyful: 100, energized: 85, motivated: 85, calm: 80, tired: 45, unmotivated: 35, stressed: 25, sad: 15 }
 
 export const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 export const parseDay = (k: string) => {
@@ -174,6 +174,8 @@ export const moodLabel = (id: MoodId) => MOODS.find((m) => m.id === id)!.label
 
 const EXAMPLE_NOTES: Record<MoodId, string> = {
   joyful: 'What was one good thing? Got my exam back and did way better than I expected.',
+  motivated: 'What did you do today? Finally started the group project and knocked out my part.',
+  unmotivated: "Why unmotivated? Couldn't get myself to open the reading. Maybe tomorrow.",
   calm: 'What did you do today? Long walk through the Arboretum after class.',
   energized: 'What happened? Morning workout at Rec Hall, then coffee with Sam.',
   tired: 'Why tired? Stayed up too late finishing the lab report.',
@@ -196,7 +198,7 @@ export function exampleJournal(now = new Date()): Journal {
     const n = 1 + Math.floor(r() * 2)
     for (let k = 0; k < n; k++) {
       d.setHours(9 + k * 6, Math.floor(r() * 60))
-      const pool: MoodId[] = sleep >= 7 ? ['joyful', 'calm', 'energized', 'calm', 'tired'] : ['tired', 'stressed', 'calm', 'sad', 'tired']
+      const pool: MoodId[] = sleep >= 7 ? ['joyful', 'calm', 'energized', 'motivated', 'calm', 'tired'] : ['tired', 'stressed', 'calm', 'sad', 'unmotivated', 'tired']
       const mood = pool[Math.floor(r() * pool.length)]
       entries.push({ at: d.toISOString(), mood, note: i < 6 && k === 0 ? EXAMPLE_NOTES[mood] : undefined })
     }

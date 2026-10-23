@@ -20,6 +20,8 @@
   --color-accent-ink: var(--accent-ink);
 
   --color-joyful: var(--mood-joyful);
+  --color-motivated: var(--mood-motivated);
+  --color-unmotivated: var(--mood-unmotivated);
   --color-calm: var(--mood-calm);
   --color-energized: var(--mood-energized);
   --color-tired: var(--mood-tired);

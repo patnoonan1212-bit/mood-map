@@ -4,8 +4,8 @@ import type { MoodId } from '../lib/moods'
 
 /**
  * A one-second burst that plays where the person tapped, acted out in the mood they chose:
- * joyful confetti and stars, calm ripples, energized lightning, sleepy Zs, stressed scribbles,
- * and sad raindrops. Purely decorative; skipped when reduced motion is on (see CheckIn).
+ * joyful confetti and stars, calm ripples, energized lightning, motivated arrows shooting up,
+ * sleepy Zs, unmotivated deflating puffs, stressed scribbles, and sad raindrops. Purely decorative; skipped when reduced motion is on (see CheckIn).
  */
 
 const rand = (seed: number) => {
@@ -99,6 +99,26 @@ function pieces(mood: MoodId) {
         out.push(
           <Piece key={i} i={i} from={{ x: 0, y: 0, opacity: 1, rotate: (a * 180) / Math.PI }} to={{ x, y, rotate: (a * 180) / Math.PI + 40 }} duration={0.9}>
             <path d={scribble} fill="none" stroke="var(--mood-stressed)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </Piece>,
+        )
+        break
+      case 'motivated': {
+        const sx = (rand(i) - 0.5) * 220
+        out.push(
+          <Piece key={i} i={i} from={{ x: sx * 0.3, y: 20, scale: 0.6, opacity: 0 }} to={{ x: sx, y: -170 - rand(i + 4) * 90, scale: 1.1 }} duration={1.1} delay={rand(i + 8) * 0.35}>
+            {i % 3 ? (
+              <path d="M-8 5L0-4 8 5" fill="none" stroke="var(--mood-motivated)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            ) : (
+              <path d={star} fill="#d9f5c6" stroke="var(--mood-motivated)" strokeWidth="1.5" />
+            )}
+          </Piece>,
+        )
+        break
+      }
+      case 'unmotivated':
+        out.push(
+          <Piece key={i} i={i} from={{ x: x * 0.15, y: y * 0.15, scale: 1.1, opacity: 0.8 }} to={{ x: x * 0.55, y: y * 0.3 + 70, scale: 0.35 }} duration={1.9} delay={rand(i + 2) * 0.4}>
+            <circle r={7 + rand(i) * 7} fill="var(--mood-unmotivated)" fillOpacity=".55" />
           </Piece>,
         )
         break

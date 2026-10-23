@@ -1,9 +1,11 @@
-// The six moods people can pick. Order here is the order of the buttons.
+// The eight moods people can pick. Order here is the order of the buttons.
 export const MOODS = [
   { id: 'joyful', label: 'Joyful', cssVar: '--mood-joyful', words: 'joyful' },
   { id: 'calm', label: 'Calm', cssVar: '--mood-calm', words: 'calm' },
   { id: 'energized', label: 'Energized', cssVar: '--mood-energized', words: 'energized' },
+  { id: 'motivated', label: 'Motivated', cssVar: '--mood-motivated', words: 'motivated' },
   { id: 'tired', label: 'Tired', cssVar: '--mood-tired', words: 'sleepy' },
+  { id: 'unmotivated', label: 'Unmotivated', cssVar: '--mood-unmotivated', words: 'unmotivated' },
   { id: 'stressed', label: 'Stressed', cssVar: '--mood-stressed', words: 'stressed' },
   { id: 'sad', label: 'Sad', cssVar: '--mood-sad', words: 'a bit blue' },
 ] as const

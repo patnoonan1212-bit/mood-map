@@ -5,7 +5,8 @@ import type { MoodId } from '../lib/moods'
 /**
  * Hand-drawn little faces, so each mood has a shape as well as a color.
  * With `animated`, each face acts out its feeling: joyful bounces, calm breathes, energized buzzes,
- * tired yawns with Zs floating up, stressed shakes with a wobbly mouth, sad cries.
+ * motivated nods with arrows rising, tired yawns with Zs floating up, unmotivated slumps and sighs,
+ * stressed shakes with a wobbly mouth, sad cries.
  * Motion is skipped when the person has reduced motion turned on.
  */
 
@@ -76,6 +77,32 @@ const FACES: Record<MoodId, Face> = {
       </>
     ),
   },
+  motivated: {
+    // A determined nod, like getting ready to go.
+    body: { rotate: [0, -6, 0, 0], y: [0, 1, -1.5, 0] },
+    bodyTransition: loop(1.4, { times: [0, 0.25, 0.5, 1] }),
+    features: () => (
+      <>
+        <path d="M16.5 19.6l4.6.8M31.5 19.6l-4.6.8" />
+        <circle cx="19.5" cy="23.8" r="1.8" fill="currentColor" stroke="none" />
+        <circle cx="28.5" cy="23.8" r="1.8" fill="currentColor" stroke="none" />
+        <path d="M17.5 28.5q6.5 6 13 0Z" fill="currentColor" fillOpacity=".9" />
+      </>
+    ),
+    // Little arrows rising up the side.
+    extras: (live) =>
+      (live ? [0, 1] : [0]).map((i) => (
+        <motion.path
+          key={i}
+          d={i ? 'M6.5 20l2.5-2.5 2.5 2.5' : 'M37 16l2.5-2.5 2.5 2.5'}
+          strokeWidth="2"
+          stroke="var(--mood-motivated)"
+          initial={live ? { opacity: 0 } : undefined}
+          animate={live ? { y: [6, -8], opacity: [0, 1, 0] } : undefined}
+          transition={live ? loop(1.4, { delay: i * 0.7, ease: 'easeOut' }) : undefined}
+        />
+      )),
+  },
   tired: {
     body: { rotate: [0, 6, 6, 0] },
     bodyTransition: loop(4.5, { times: [0, 0.35, 0.75, 1] }),
@@ -104,6 +131,34 @@ const FACES: Record<MoodId, Face> = {
           transition={live ? loop(2.4, { delay: i * 0.8, ease: 'easeOut' }) : undefined}
         />
       )),
+  },
+  unmotivated: {
+    // A slow slump and a sigh.
+    body: { y: [0, 1.6, 1.6, 0], scaleY: [1, 0.95, 0.95, 1] },
+    bodyTransition: loop(4, { times: [0, 0.4, 0.75, 1] }),
+    features: (live) => (
+      <>
+        <path d="M16.5 21.5h5M26.5 21.5h5" />
+        <motion.g animate={live ? { x: [-1, 1, 1, -1] } : undefined} transition={live ? loop(5, { times: [0, 0.4, 0.6, 1] }) : undefined}>
+          <circle cx="19" cy="23.2" r="1.4" fill="currentColor" stroke="none" />
+          <circle cx="29" cy="23.2" r="1.4" fill="currentColor" stroke="none" />
+        </motion.g>
+        <path d="M19.5 30.5h9" />
+      </>
+    ),
+    // A little sigh puff drifting away.
+    extras: (live) =>
+      live && (
+        <motion.path
+          d="M5 30a2.2 2.2 0 0 1 2.6-2.4a2.6 2.6 0 0 1 4.8.6a1.9 1.9 0 0 1-.4 3.8H6.6A1.8 1.8 0 0 1 5 30Z"
+          fill="#fff"
+          fillOpacity=".8"
+          strokeWidth="1"
+          initial={{ opacity: 0 }}
+          animate={{ x: [3, -5], opacity: [0, 0.9, 0], scale: [0.6, 1.1] }}
+          transition={loop(4, { times: [0, 0.4, 1], delay: 1.2, ease: 'easeOut' })}
+        />
+      ),
   },
   stressed: {
     body: { x: [-0.5, 0.5, -0.5] },

@@ -4,12 +4,15 @@ import { USING_SAMPLE_DATA, useSameMoodStats } from '../lib/campusNow'
 import { currentStreak, useJournal } from '../lib/journal'
 import { moodById, type MoodId } from '../lib/moods'
 import { MoodFace } from './MoodFace'
+import { MotivationCard } from './MotivationCard'
 import { NoteCard } from './NoteCard'
 import { SleepCard } from './SleepCard'
 import { SupportCard } from './SupportCard'
 
 const LINES: Record<MoodId, string> = {
   joyful: 'Love that. Spread it around.',
+  motivated: "Let's go. Make it count.",
+  unmotivated: 'Some days are like that. Start small.',
   calm: 'Nice and steady. Enjoy it.',
   energized: 'Ride that wave.',
   tired: 'Rest is productive too.',
@@ -87,6 +90,7 @@ export function MoodResult({ mood, onSeeMap, onChange, onBreathe }: Props) {
 
       {(mood === 'stressed' || mood === 'sad') && <SupportCard onBreathe={onBreathe} />}
       {mood === 'tired' && <SleepCard />}
+      {mood === 'unmotivated' && <MotivationCard />}
 
       <NoteCard mood={m} />
 

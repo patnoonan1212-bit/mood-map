@@ -8,7 +8,7 @@ export type CellHour = { cell: string; hoursAgo: number; counts: MoodCounts }
 
 export type CellMood = { cell: string; lngLat: [number, number]; counts: MoodCounts; total: number }
 
-export const emptyCounts = (): MoodCounts => ({ joyful: 0, calm: 0, energized: 0, tired: 0, stressed: 0, sad: 0 })
+export const emptyCounts = (): MoodCounts => ({ joyful: 0, calm: 0, energized: 0, motivated: 0, tired: 0, unmotivated: 0, stressed: 0, sad: 0 })
 
 export const sumCounts = (c: MoodCounts) => MOODS.reduce((s, m) => s + c[m.id], 0)
 
