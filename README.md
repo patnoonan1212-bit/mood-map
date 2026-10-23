@@ -25,7 +25,7 @@ npm run dev     # starts the app; open the link it prints, usually http://localh
 ## Progress
 
 - [x] 1. Project setup and design tokens
-- [ ] 2. Mood check-in
+- [x] 2. Mood check-in
 - [ ] 3. Map with sample data
 - [ ] 4. Supabase and real check-ins
 - [ ] 5. Privacy rules in the database
