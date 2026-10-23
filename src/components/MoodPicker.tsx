@@ -72,10 +72,10 @@ export function MoodPicker({ selected, onPick, disabled }: Props) {
             whileTap={disabled ? undefined : { scale: 0.9 }}
             className="group relative isolate flex min-h-36 flex-col items-center justify-center gap-2 overflow-visible rounded-xl p-4 disabled:cursor-default"
             style={{
-              background: `linear-gradient(160deg, ${tint(m.cssVar, 34)} 0%, ${tint(m.cssVar, 10)} 100%)`,
+              background: `linear-gradient(160deg, ${tint(m.cssVar, 48)} 0%, ${tint(m.cssVar, 18)} 100%)`,
               boxShadow: isOn
                 ? `0 0 0 3px var(--surface), 0 0 0 6px var(${m.cssVar}), 0 14px 34px ${tint(m.cssVar, 55, 'transparent')}`
-                : `inset 0 1px 0 rgb(255 255 255 / 0.55), 0 10px 24px ${tint(m.cssVar, 28, 'transparent')}`,
+                : `inset 0 1px 0 rgb(255 255 255 / 0.55), 0 10px 24px ${tint(m.cssVar, 40, 'transparent')}`,
             }}
           >
             {/* Soft glow that breathes behind the face */}
@@ -83,7 +83,7 @@ export function MoodPicker({ selected, onPick, disabled }: Props) {
               aria-hidden="true"
               className="absolute top-3 left-1/2 -z-10 size-24 -translate-x-1/2 rounded-full blur-xl"
               style={{ background: `var(${m.cssVar})` }}
-              animate={reduce ? { opacity: 0.45 } : { opacity: [0.35, 0.6, 0.35], scale: [0.9, 1.05, 0.9] }}
+              animate={reduce ? { opacity: 0.6 } : { opacity: [0.5, 0.8, 0.5], scale: [0.9, 1.05, 0.9] }}
               transition={reduce ? undefined : { duration: 4, delay: i * 0.5, repeat: Infinity, ease: 'easeInOut' }}
             />
             {/* Glassy shine across the top */}

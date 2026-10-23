@@ -25,12 +25,12 @@
   --sky-bottom: #f6d9e0;
 
   /* Moods: harmonious, slightly desaturated */
-  --mood-joyful: #f2c14e;
-  --mood-calm: #5fb3a8;
-  --mood-energized: #f2955f;
-  --mood-tired: #a597d1;
-  --mood-stressed: #c95a4c;
-  --mood-sad: #7e9cc6;
+  --mood-joyful: #f5b72c;
+  --mood-calm: #35ab9b;
+  --mood-energized: #f7844a;
+  --mood-tired: #9581d9;
+  --mood-stressed: #d84c3c;
+  --mood-sad: #5f8fd0;
 
   /* Map */
   --map-land: #f4ece1;
@@ -67,12 +67,12 @@
   --sky-top: #2c2148;
   --sky-bottom: #1d1730;
 
-  --mood-joyful: #f5cd66;
-  --mood-calm: #6fc6ba;
-  --mood-energized: #f7a273;
-  --mood-tired: #b5a8e2;
-  --mood-stressed: #e0725f;
-  --mood-sad: #8eaee0;
+  --mood-joyful: #f8c845;
+  --mood-calm: #4fc7b6;
+  --mood-energized: #fb9358;
+  --mood-tired: #a994ee;
+  --mood-stressed: #ec6450;
+  --mood-sad: #78a6ec;
 
   --map-land: #221b38;
   --map-water: #18142a;

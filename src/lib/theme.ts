@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
+// Light is the default look. 'system' (follow the phone) is still supported if we ever want it back.
 export type ThemeChoice = 'system' | 'light' | 'dark'
 
 const KEY = 'moodmap.theme'
@@ -8,11 +9,11 @@ const media = () => window.matchMedia('(prefers-color-scheme: dark)')
 function readChoice(): ThemeChoice {
   try {
     const v = localStorage.getItem(KEY)
-    if (v === 'light' || v === 'dark') return v
+    if (v === 'light' || v === 'dark' || v === 'system') return v
   } catch {
-    /* storage can be blocked; fall back to system */
+    /* storage can be blocked; fall back to the default */
   }
-  return 'system'
+  return 'light'
 }
 
 function apply(choice: ThemeChoice) {
@@ -37,8 +38,7 @@ export function useTheme() {
 
   const choose = useCallback((next: ThemeChoice) => {
     try {
-      if (next === 'system') localStorage.removeItem(KEY)
-      else localStorage.setItem(KEY, next)
+      localStorage.setItem(KEY, next)
     } catch {
       /* ignore */
     }
