@@ -29,9 +29,13 @@ npm run dev     # starts the app; open the link it prints, usually http://localh
 ## Progress
 
 - [x] 1. Project setup and design tokens
-- [x] 2. Mood check-in
-- [x] 3. Map with sample data (plus bottom tabs and the Journal)
-- [ ] 4. Supabase and real check-ins
-- [ ] 5. Privacy rules in the database
-- [ ] 6. Extra features
-- [ ] 7. Polish, accessibility and launch
+- [x] 2. Mood check-in, Calm Corner, streak on check-in
+- [x] 3. Campus map with sample data, bottom tabs, Journal, map unlocks after today's check-in
+- [ ] 4. Supabase: real check-ins and anonymous sessions
+- [ ] 5. Privacy rules enforced in the database
+- [ ] 6. Push notifications ("East Halls is buzzing right now")
+- [ ] 7. Weekly recap and shareable cards
+- [ ] 8. Remaining extras: forecast, send a good vibe, daily prompt, leaderboard, daily reminder
+- [ ] 9. Polish, accessibility and launch
+
+Parked for now: Friends (the app stays fully anonymous), Strava/Fitbit/Oura connections.
