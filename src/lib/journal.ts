@@ -172,6 +172,15 @@ export const currentStreak = (entries: JournalEntry[]) => streaks(new Set(byDay(
 
 export const moodLabel = (id: MoodId) => MOODS.find((m) => m.id === id)!.label
 
+const EXAMPLE_NOTES: Record<MoodId, string> = {
+  joyful: 'What was one good thing? Got my exam back and did way better than I expected.',
+  calm: 'What did you do today? Long walk through the Arboretum after class.',
+  energized: 'What happened? Morning workout at Rec Hall, then coffee with Sam.',
+  tired: 'Why tired? Stayed up too late finishing the lab report.',
+  stressed: 'What happened? Two deadlines on Friday and a shift at work.',
+  sad: 'Why sad? Missing home a lot this week.',
+}
+
 /** Example journal for the preview button. Never saved. */
 export function exampleJournal(now = new Date()): Journal {
   let s = 42
@@ -188,7 +197,8 @@ export function exampleJournal(now = new Date()): Journal {
     for (let k = 0; k < n; k++) {
       d.setHours(9 + k * 6, Math.floor(r() * 60))
       const pool: MoodId[] = sleep >= 7 ? ['joyful', 'calm', 'energized', 'calm', 'tired'] : ['tired', 'stressed', 'calm', 'sad', 'tired']
-      entries.push({ at: d.toISOString(), mood: pool[Math.floor(r() * pool.length)] })
+      const mood = pool[Math.floor(r() * pool.length)]
+      entries.push({ at: d.toISOString(), mood, note: i < 6 && k === 0 ? EXAMPLE_NOTES[mood] : undefined })
     }
   }
   return { entries, days }

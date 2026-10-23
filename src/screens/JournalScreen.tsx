@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import { MoodFace } from '../components/MoodFace'
+import { NoteEditor } from '../components/NoteEditor'
+import { moodById } from '../lib/moods'
 import {
   averageScore,
   byDay,
@@ -11,6 +13,7 @@ import {
   exampleJournal,
   moodLabel,
   setDayExtras,
+  setNote,
   sleepInsight,
   streaks,
   useJournal,
@@ -98,6 +101,61 @@ function Stepper({ id, label, value, unit, step, max, onChange }: { id: string; 
   )
 }
 
+/** Every check-in, newest first, with its note. Notes can be added or edited here too. */
+function Entries({ journal, readOnly }: { journal: Journal; readOnly: boolean }) {
+  const [shown, setShown] = useState(8)
+  const [editing, setEditing] = useState<string | null>(null)
+  const list = [...journal.entries].reverse()
+  return (
+    <section className="flex flex-col gap-2" aria-labelledby="entries-title">
+      <h3 id="entries-title" className="text-sm font-extrabold tracking-wider text-ink-soft uppercase">
+        Check-ins and notes
+      </h3>
+      <ul className="flex flex-col gap-2.5">
+        <AnimatePresence initial={false}>
+          {list.slice(0, shown).map((e) => (
+            <motion.li key={e.at} layout initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-2 rounded-lg bg-surface px-4 py-3 shadow-soft">
+              <div className="flex items-center gap-3">
+                <MoodFace mood={e.mood} className="size-9 shrink-0" />
+                <span className="font-bold">{moodLabel(e.mood)}</span>
+                <span className="ml-auto text-sm text-ink-soft tabular-nums">
+                  {new Date(e.at).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                </span>
+              </div>
+              {editing === e.at ? (
+                <NoteEditor
+                  mood={moodById(e.mood)}
+                  initial={e.note ?? ''}
+                  autoFocus
+                  onSave={(text) => {
+                    setNote(e.at, text)
+                    setEditing(null)
+                  }}
+                  onCancel={() => setEditing(null)}
+                />
+              ) : (
+                <>
+                  {e.note && <p className="rounded-md bg-bg-soft px-3 py-2 whitespace-pre-line">{e.note}</p>}
+                  {!readOnly && (
+                    <button type="button" onClick={() => setEditing(e.at)} className="self-start text-sm font-extrabold text-accent">
+                      {e.note ? 'Edit note' : '+ Add a note'}
+                    </button>
+                  )}
+                </>
+              )}
+            </motion.li>
+          ))}
+        </AnimatePresence>
+      </ul>
+      {list.length > shown && (
+        <button type="button" onClick={() => setShown((n) => n + 10)} className="self-center rounded-full border-2 border-line px-5 py-2 font-bold">
+          Show more
+        </button>
+      )}
+    </section>
+  )
+}
+
 export default function JournalScreen() {
   const real = useJournal()
   const [preview, setPreview] = useState(false)
@@ -114,7 +172,6 @@ export default function JournalScreen() {
   const insight = sleepInsight(journal)
   const today = dayKey(new Date())
   const extras = journal.days[today] ?? {}
-  const recent = [...journal.entries].reverse().slice(0, 6)
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-5 px-5 pt-[max(24px,env(safe-area-inset-top))] pb-[calc(112px+env(safe-area-inset-bottom))]">
@@ -167,24 +224,7 @@ export default function JournalScreen() {
         )}
       </section>
 
-      {recent.length > 0 && (
-        <section className="flex flex-col gap-2" aria-label="Recent check-ins">
-          <h3 className="text-sm font-extrabold tracking-wider text-ink-soft uppercase">Recent check-ins</h3>
-          <ul className="flex flex-col gap-2">
-            <AnimatePresence initial={false}>
-              {recent.map((e) => (
-                <motion.li key={e.at} layout initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-lg bg-surface px-4 py-3 shadow-soft">
-                  <MoodFace mood={e.mood} className="size-9 shrink-0" />
-                  <span className="font-bold">{moodLabel(e.mood)}</span>
-                  <span className="ml-auto text-sm text-ink-soft tabular-nums">
-                    {new Date(e.at).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
-                  </span>
-                </motion.li>
-              ))}
-            </AnimatePresence>
-          </ul>
-        </section>
-      )}
+      {journal.entries.length > 0 && <Entries journal={journal} readOnly={showingExample} />}
 
       <section className="flex flex-col gap-3 rounded-xl bg-surface p-4 shadow-soft" aria-label="Connected apps">
         <div>
