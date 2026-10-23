@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { MoodId } from '../lib/moods'
 
 // Hand-drawn little faces, so each mood has a shape as well as a color.
@@ -50,11 +50,12 @@ const FEATURES: Record<MoodId, ReactNode> = {
   ),
 }
 
-export function MoodFace({ mood, className = '' }: { mood: MoodId; className?: string }) {
+export function MoodFace({ mood, className = '', style }: { mood: MoodId; className?: string; style?: CSSProperties }) {
   return (
     <svg
       viewBox="0 0 48 48"
       className={className}
+      style={style}
       fill="none"
       stroke="currentColor"
       strokeWidth="2.2"

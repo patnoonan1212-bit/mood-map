@@ -45,7 +45,7 @@ export function CheckIn({ onSeeMap }: Props) {
             <MoodFace mood={picked} className="size-12 shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="text-lg font-bold">Thanks. You're counted as {moodById(picked).label.toLowerCase()}.</p>
-              <p className="text-ink-soft">Your tap joins the campus sky in a few minutes.</p>
+              <p className="text-ink-soft">Your tap shows up on the campus map in a few minutes.</p>
             </div>
             <button
               type="button"
@@ -71,7 +71,7 @@ export function CheckIn({ onSeeMap }: Props) {
           whileTap={{ scale: 0.95 }}
           className="self-center rounded-full bg-accent px-7 py-3.5 text-lg font-extrabold text-accent-ink shadow-soft"
         >
-          See the campus sky →
+          See how campus feels →
         </motion.button>
       )}
 

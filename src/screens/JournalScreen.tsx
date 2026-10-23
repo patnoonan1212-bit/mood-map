@@ -20,11 +20,11 @@ import {
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
 function scoreWord(score: number) {
-  if (score >= 80) return 'Sunny'
-  if (score >= 65) return 'Mostly bright'
-  if (score >= 50) return 'Partly cloudy'
-  if (score >= 35) return 'Overcast'
-  return 'Stormy'
+  if (score >= 80) return 'Great week'
+  if (score >= 65) return 'Good week'
+  if (score >= 50) return 'Okay week'
+  if (score >= 35) return 'Low week'
+  return 'Rough week'
 }
 
 function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {

@@ -11,7 +11,7 @@
   --bg: #fbf5ec;            /* warm cream page */
   --bg-soft: #f5ebdf;       /* slightly deeper cream for wells */
   --surface: #fffaf3;       /* cards */
-  --glass: rgb(255 250 243 / 0.72);  /* frosted panels over the map */
+  --glass: rgb(255 250 243 / 0.96);  /* frosted panels over the map */
   --line: #eadccb;          /* hairlines and borders */
 
   /* Text */
@@ -56,7 +56,7 @@
   --bg: #1d1730;
   --bg-soft: #251d3b;
   --surface: #2a2142;
-  --glass: rgb(42 33 66 / 0.66);
+  --glass: rgb(42 33 66 / 0.95);
   --line: #3a2f56;
 
   --ink: #f6ecf1;

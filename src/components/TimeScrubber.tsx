@@ -28,7 +28,7 @@ export function TimeScrubber({ hoursAgo, onChange, maxHours = 23 }: Props) {
   }
 
   return (
-    <section className="glass flex items-center gap-3 rounded-xl p-3 pl-3.5" aria-label="Replay the last 24 hours">
+    <section className="glass flex items-center gap-3 rounded-xl p-3 pl-3.5" aria-label="Look back over the last 24 hours">
       <motion.button
         type="button"
         onClick={play}

@@ -120,3 +120,22 @@ body {
 .maplibregl-ctrl-attrib a {
   color: var(--ink-soft) !important;
 }
+
+/* Place bubbles on the map gently bob, each a little out of step with the others. */
+.mood-pin {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.mood-bubble {
+  animation: bob 4.2s ease-in-out infinite;
+}
+.mood-pin[data-label='hidden'] .bubble-label {
+  display: none;
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
