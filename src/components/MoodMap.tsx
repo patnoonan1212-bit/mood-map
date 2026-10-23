@@ -157,7 +157,13 @@ function addMoodLayers(map: MapLibreMap) {
 const ANGLE = Object.fromEntries(MOODS.map((m, i) => [m.id, (i / MOODS.length) * Math.PI * 2])) as Record<MoodId, number>
 const METER = 1 / 111_320
 
-/** One soft puff per mood present, sized by its share. Smaller shares are drawn last so they stay visible. */
+/**
+ * One soft puff per mood present, animated so the colors mix:
+ *  - the biggest mood sits in the middle as the largest glow, gently breathing
+ *  - every other mood is smaller (sized by its share) and orbits around it at its own pace,
+ *    drifting in toward the middle and back out, so its color keeps swirling into the main one
+ * Smaller moods are drawn on top so they stay visible where they overlap.
+ */
 function mixPuffs(
   center: [number, number],
   counts: CellMood['counts'],
@@ -170,28 +176,42 @@ function mixPuffs(
 ) {
   const total = MOODS.reduce((n, m) => n + counts[m.id], 0)
   const lngScale = 1 / Math.cos((center[1] * Math.PI) / 180)
-  return MOODS.filter((m) => counts[m.id] / total >= minShare)
-    .sort((a, b) => counts[b.id] - counts[a.id])
-    .map((m) => {
-      const share = counts[m.id] / total
-      const a = ANGLE[m.id] + phase + t / 9000 // the whole mix turns very slowly
-      const away = (1 - share) * spreadM
-      const breath = 1 + 0.07 * Math.sin(t / 2400 + phase + ANGLE[m.id])
-      return {
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [center[0] + Math.cos(a) * away * METER * lngScale, center[1] + Math.sin(a) * away * METER],
-        },
-        properties: { color: colors[m.id], s: size * (0.45 + Math.sqrt(share) * 0.75) * breath },
-      }
-    })
+  const present = MOODS.filter((m) => counts[m.id] / total >= minShare).sort((a, b) => counts[b.id] - counts[a.id])
+  return present.map((m, rank) => {
+    const share = counts[m.id] / total
+    const own = phase + ANGLE[m.id]
+    let dx = 0
+    let dy = 0
+    if (rank > 0) {
+      // Orbit: smaller moods circle faster, and each breathes in and out of the middle.
+      const speed = 5200 - Math.min(2400, rank * 600)
+      const angle = own + t / speed
+      const reach = spreadM * (0.55 + 0.45 * Math.sin(t / 2100 + own * 1.7))
+      dx = Math.cos(angle) * reach
+      dy = Math.sin(angle) * reach
+    } else {
+      // The main mood wanders only a little around the center.
+      dx = Math.cos(t / 3700 + own) * spreadM * 0.12
+      dy = Math.sin(t / 4300 + own) * spreadM * 0.12
+    }
+    const breath = 1 + (rank === 0 ? 0.06 : 0.1) * Math.sin(t / 1900 + own)
+    // Size follows the share closely, so the biggest mood clearly wins, with a floor so small moods still show.
+    const s = size * (0.3 + 1.25 * Math.pow(share, 0.75)) * breath
+    return {
+      type: 'Feature' as const,
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [center[0] + dx * METER * lngScale, center[1] + dy * METER],
+      },
+      properties: { color: colors[m.id], s },
+    }
+  })
 }
 
 /** Layer data. `t` (ms) drives the slow breathing, swirling and the pin pulse. */
 function moodData(cells: CellMood[], places: PlaceMood[], colors: Record<MoodId, string>, selectedId: string | null, t: number) {
-  const areas = cells.flatMap((c, i) => mixPuffs(c.lngLat, c.counts, colors, Math.min(1.4, 0.7 + Math.sqrt(c.total) / 9), 45, 0.15, i * 1.7, t))
-  const spots = places.flatMap((p, i) => mixPuffs(p.at, p.counts, colors, Math.min(1.7, 0.75 + Math.sqrt(p.total) / 7), 80, 0.08, i * 2.3, t))
+  const areas = cells.flatMap((c, i) => mixPuffs(c.lngLat, c.counts, colors, Math.min(1.4, 0.75 + Math.sqrt(c.total) / 9), 55, 0.12, i * 1.7, t))
+  const spots = places.flatMap((p, i) => mixPuffs(p.at, p.counts, colors, Math.min(1.8, 0.85 + Math.sqrt(p.total) / 7), 95, 0.06, i * 2.3, t))
   const pins = places.map((p, i) => {
     const cycle = ((t / 2600 + i * 0.37) % 1 + 1) % 1 // 0 to 1, a little out of step per place
     return {
@@ -298,14 +318,14 @@ export function MoodMap({ cells, places, selectedId, onSelect }: Props) {
   // New data from the time slider, or a new selection.
   useEffect(() => paintRef.current(reduce ? 0 : performance.now()), [cells, places, selectedId, reduce])
 
-  // The glows breathe slowly.
+  // The colors swirl and breathe.
   useEffect(() => {
     if (reduce) return
     let raf = 0
     let last = 0
     const tick = (t: number) => {
       raf = requestAnimationFrame(tick)
-      if (t - last < 80) return
+      if (t - last < 50) return // about 20 updates a second keeps the swirl smooth
       last = t
       paintRef.current(t)
     }
